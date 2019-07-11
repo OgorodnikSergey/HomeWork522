@@ -30,10 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String FILE_PASSWORD = "password.txt";
     public static final String APP_PREFERENCES = "mysettings";
     SharedPreferences mSettings;
-    public static String strLog = "";
-    public static String strPassword = "";
-
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 if (isLoginAndPasswordValid()) {
+                     String strLog = "";
+                     String strPassword = "";
+
                     if (!checkBoxSettings()) {
                         //------------------------------------Загружаем логин
                         strLog = readLogin();
@@ -227,25 +227,30 @@ public class MainActivity extends AppCompatActivity {
     //----------------------------------------------------------------------------------
 // Читаем с внешнего носителя
     private String readLineFromFileExternal(String fileName) {
-        String line = null;
         if (isExternalStorageReadable()) {
-            StringBuilder sb = new StringBuilder();
+            FileInputStream fis = null;
             try {
                 File textFile = new File(Environment.getExternalStorageDirectory(), fileName);
-                FileInputStream fis = new FileInputStream(textFile);
-                if (fis != null) {
-                    InputStreamReader isr = new InputStreamReader(fis);
-                    BufferedReader buff = new BufferedReader(isr);
-                    line = buff.readLine();
-                    fis.close();
-                }
+                fis = new FileInputStream(textFile);
+                InputStreamReader isr = new InputStreamReader(fis);
+                BufferedReader buff = new BufferedReader(isr);
+                return buff.readLine();
             } catch (IOException e) {
                 e.printStackTrace();
+                return null;
+            } finally {
+                if (fis != null) {
+                    try {
+                        fis.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         } else {
             Toast.makeText(this, "Чтение с внешнего носителя запрещено", Toast.LENGTH_SHORT).show();
+            return null;
         }
-        return line;
     }
 
     private boolean isExternalStorageReadable() {
@@ -268,19 +273,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void saveDataExternal(String fileName, String text){
-        if(isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)){
-            File textFile = new File(Environment.getExternalStorageDirectory(), fileName);
-            try{
-                FileOutputStream fos = new FileOutputStream(textFile);
+    private void saveDataExternal(String fileName, String text) {
+        if (isExternalStorageWritable() && checkPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+            FileOutputStream fos = null;
+            try {
+                File textFile = new File(Environment.getExternalStorageDirectory(), fileName);
+                fos = new FileOutputStream(textFile);
                 fos.write(text.getBytes());
-                fos.close();
 
                 Toast.makeText(this, "Файл сохранен", Toast.LENGTH_SHORT).show();
-            }catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
-        }else{
+        } else {
             Toast.makeText(this, "Нельзя записать на внешний носитель", Toast.LENGTH_SHORT).show();
         }
     }
